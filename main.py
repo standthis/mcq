@@ -1,16 +1,49 @@
 #!/usr/bin/python
 import cv2 as cv
+import sys
 import numpy as np
 from matplotlib import pyplot as plt
-
+import imutils 
+# CHECK OUT IMUTILS!
 img = cv.imread('extra/mcq.png')
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 binary = cv.bitwise_not(gray)
-(_,contours) = cv.findContours(binary, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
+(cnts, hirarchy ) = cv.findContours(binary, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
+x, y = [], []
+
+for contour_line in cnts:
+    for contour in contour_line:
+        x.append(contour[0][0])
+        y.append(contour[0][1])
+
+
+
+x1 = 38
+x2 = 832
+y1 = 160
+y2 = 1220
+#print(cnts)
+#cnts = cnts[0] if imutils.is_cv2() else cnts[1]  
+#cntsSorted = sorted(cnts, key=lambda x: cv.contourArea(x))
+cropped = binary[y1:y2, x1:x2]
+
+cv.imshow("Black", cropped)
+k = cv.waitKey(0)
+if k == ord('q'):
+    cv.imwrite("test.png", cropped)
+cv.destroyAllWindows()
+sys.exit()
+
+
+print(type(contours[0][0, 0, 0]))
 for contour in contours:
     (x,y,w,h) = cv.boundingRect(contour)
-    xxx = cv.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
+    what = cv.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
+
+
 
 #Morpholoical transformation
 kernel = np.ones((5,5),np.uint8)
