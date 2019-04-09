@@ -14,6 +14,9 @@ binary = cv.bitwise_not(gray)
 
 x, y = [], []
 
+
+print(type(cnts[0]))
+print(cnts[0])
 for contour_line in cnts:
     for contour in contour_line:
         x.append(contour[0][0])
@@ -21,10 +24,10 @@ for contour_line in cnts:
 
 
 
-x1 = 38
-x2 = 832
-y1 = 160
-y2 = 1220
+x1 = 25
+x2 = 850
+y1 = 50
+y2 = 1225
 #print(cnts)
 #cnts = cnts[0] if imutils.is_cv2() else cnts[1]  
 #cntsSorted = sorted(cnts, key=lambda x: cv.contourArea(x))
