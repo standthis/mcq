@@ -4,8 +4,8 @@
 This example illustrates how to use cv.HoughCircles() function.
 
 Usage:
-    houghcircles.py [<image_name>]
-    image argument defaults to board.jpg
+    mcq.py [<image_name>]
+    image argument defaults to extra/clean.png
 '''
 
 # Python 2/3 compatibility
@@ -19,13 +19,78 @@ import imutils
 import imutils.convenience as conv
 import imutils.contours as cont
 import sys
+import collections 
+np.set_printoptions(threshold=sys.maxsize)
 
 def main():
     try:
         fn = sys.argv[1]
     except IndexError:
         fn = 'extra/clean.png'
+    
+    paper, warped = transform(fn)
 
+    outimg, quiz = findcircles(warped.copy())
+    cv.imshow("source1", outimg)
+    #cv.imshow("source2", cimg)
+    k = cv.waitKey(0)
+    if k == ord('s'):
+        cv.imwrite("research.png", circular)
+    print('Done')
+
+
+
+def mark(quiz, warped):
+    return None
+    # two ways 
+    # one 
+    # find all marked circles and check their positions
+    # two
+    # cut each circle out and check if marked
+
+
+def findcircles(cimg):
+    #thresh = cv.threshold(cimg, 0, 255,
+    #        cv.THRESH_BINARY_INV | cv.THRESH_OTSU)[1]
+    #bitwize = cv.bitwise_not(warped)
+    #circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=0,maxRadius=100)
+    circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT,1,15,
+                                            param1=10,param2=10,minRadius=7,maxRadius=9)
+    #circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT, 5, 500)
+    circles = np.uint16(np.around(circles))
+    circles_orig = circles.copy()
+    # filter questions circles
+    circles = [circ for circ in circles[0] if circ[0] > 340]
+    first = [circ for circ in circles if circ[0] < 470]
+    second = [circ for circ in circles if circ[0] > 580]
+    # unsorted_list.sort(key=lambda x: x[3])
+    first.sort(key=lambda x: x[1]) 
+    second.sort(key=lambda x: x[1]) 
+    # [l[i:i + n] for i in range(0, len(l), n)] 
+    n = 5
+    # all questions 
+    quiz = [first[i:i + n] for i in range(0, len(first), n)]
+    quiz.extend([second[i:i + n] for i in range(0, len(second), n)])
+    quiz = [sorted(q, key=lambda x: x[0]) for q in quiz]
+
+    for q in quiz:
+        for i in q:
+            # draw the outer circle
+            cv.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
+            # draw the center of the circle
+            cv.circle(cimg,(i[0],i[1]),2,(0,0,255),3)
+    #count = 0
+    #for i in circles[0,:]:
+    #    # draw the outer circle
+    #    cv.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
+    #    # draw the center of the circle
+    #    cv.circle(cimg,(i[0],i[1]),2,(0,0,255),3)
+    #    if count == -1:
+    #        break
+    #    count += 1
+    return cimg, quiz
+
+def transform(fn):
     src = cv.imread(cv.samples.findFile(fn))
     cimg = src.copy() # numpy function
     #img = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
@@ -78,24 +143,8 @@ def main():
     # apply Otsu's thresholding method to binarize the warped
     # piece of paper
     return paper, warped
-    thresh = cv.threshold(warped, 0, 255,
-            cv.THRESH_BINARY_INV | cv.THRESH_OTSU)[1]
-    bitwize = cv.bitwise_not(warped)
-
-
-    #img = paper
-    #cimg = warped
-    #cv.imshow("source", paper)
-    #cv.imshow("source", warped)
-    #cv.imshow("source", img)
-    #k = cv.waitKey(0)
-    #if k == ord('q'):
-    #    cv.imwrite("huffme.png", img)
-    #    cv.imwrite("huffcir.png", cimg)
-    #print('Done')
-
 
 if __name__ == '__main__':
-    print(__doc__)
+    #print(__doc__)
     main()
     cv.destroyAllWindows()

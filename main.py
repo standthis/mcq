@@ -35,8 +35,8 @@ for c in cnts:
 #blur = cv.medianBlur(img,5)
 #cimg = cv.cvtColor(gray,cv.COLOR_GRAY2BGR)
 cimg = gray
-circles = cv.HoughCircles(binary,cv.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=0,maxRadius=100)
-#circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT, 5, 500)
+#circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=0,maxRadius=0)
+circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT, 5, 500)
 circles = np.uint16(np.around(circles))
 for i in circles[0,:]:
     # draw the outer circle
