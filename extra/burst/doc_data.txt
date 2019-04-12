@@ -1,0 +1,117 @@
+InfoBegin
+InfoKey: CreationDate
+InfoValue: D:20160819121438+02'00'
+InfoBegin
+InfoKey: Creator
+InfoValue: Xerox WorkCentre 7225
+InfoBegin
+InfoKey: Producer
+InfoValue: Xerox WorkCentre 7225
+PdfID0: 9634d6f6198cfe75a17f364629c15c06
+PdfID1: 9634d6f6198cfe75a17f364629c15c06
+NumberOfPages: 21
+PageMediaBegin
+PageMediaNumber: 1
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 2
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 3
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 4
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 5
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 6
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 7
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 8
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 9
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 10
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 11
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 12
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 13
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 14
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 15
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 16
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 17
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 18
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 19
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 20
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
+PageMediaBegin
+PageMediaNumber: 21
+PageMediaRotation: 270
+PageMediaRect: 0 0 596 421
+PageMediaDimensions: 596 421
