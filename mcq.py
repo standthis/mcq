@@ -20,6 +20,7 @@ import imutils.convenience as conv
 import imutils.contours as cont
 import sys
 import collections 
+import math
 np.set_printoptions(threshold=sys.maxsize)
 
 def main():
@@ -28,19 +29,32 @@ def main():
     except IndexError:
         fn = 'extra/clean.png'
     
+    memo_path = 'extra/burst/pg_0003-1.png'
     orig = 'extra/clean.png'
     paper, warped = transform(orig)
-    _, target = transform(fn)
+    targetpaper, target = transform(fn)
+    if orient(target):
+        target = conv.rotate_bound(target.copy(), 180)
     outimg, quiz = findcircles(warped.copy())
-    outimg, answers = extract(quiz, target)
+    targetout, targetQuiz = findcircles(target.copy())
+    blankout, answers = extract(quiz, target)
+    memo_quiz, solutions, memoblank = memo(memo_path, quiz)
+
+    assert onlyone(solutions)
+
+    result = mark(answers, solutions)
+    print('the student recieved', sum(result)/len(result)*100, '%')
+
+    #blankout = targetout 
+    blankout = memoblank 
     if outimg.any() == None:
         print("outimg is none")
         sys.exit()
-    cv.imshow("source1", outimg)
+    cv.imshow("source1", blankout)
     #cv.imshow("source2", cimg)
     k = cv.waitKey(0)
     if k == ord('s'):
-        cv.imwrite("research.png", outimg)
+        cv.imwrite("research.png", blankout)
     print('Done')
 
 
@@ -50,8 +64,37 @@ def main():
 # THIS ALSO MEANS ORIENTATION
 # IT MEANS THAT LOST CIRCLES CAN BE RECOVERED FROM THE PROTOTYPE
 
+def onlyone(result):
+    for q in result:
+        if sum(q) > 1:
+            return False
+    return True
+
+def flat(l):
+    return [item for sublist in l for item in sublist]
+
+def memo(img, quiz):
+    paper, warped = transform(img)
+    if orient(warped):
+        warped = conv.rotate_bound(warped.copy(), 180)
+    outimg, memo_quiz = findcircles(warped.copy())
+    blankout, solutions = extract(quiz, warped)
+    return memo_quiz, solutions, blankout
+
+
+def orient(cimg):
+    #check orientation
+    circles = getHough(cimg.copy())
+    circles_orig = circles.copy()
+    circles = [circ for circ in circles[0] if circ[0] > 340]
+    circles_check = [circ for circ in circles_orig[0] if circ[0] < 340]
+    return len(circles_check) * 2 > len(circles)
+
 # find answers
-def marking(answers):
+def mark(answers, solutions):
+    return [a == b for a,b in zip(answers, solutions)]
+
+def marktocsv(answers):
     options = ['a', 'b', 'c', 'd', 'e']
     mark = []
     for qi, q in enumerate(answers):
@@ -91,7 +134,7 @@ def extract(quiz, warped):
             #mask = cv.bitwise_and(, result, mask=mask)
             total = cv.countNonZero(result)
             answers.append(total > 100)
-            print(ccc, total)
+            #print(ccc, total)
             if ccc == 10000:
                 return blank
             ccc += 1
@@ -108,20 +151,26 @@ def extract(quiz, warped):
     return blank, answers
 
 def nest(simple, n):
-    return [first[i:i + n] for i in range(0, len(first), n)]
+    return [simple[i:i + n] for i in range(0, len(simple), n)]
 
-def findcircles(cimg):
+def getHough(img):
     #thresh = cv.threshold(cimg, 0, 255,
     #        cv.THRESH_BINARY_INV | cv.THRESH_OTSU)[1]
     #bitwize = cv.bitwise_not(warped)
     #circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=0,maxRadius=100)
-    circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT,1,15,
+    circles = cv.HoughCircles(img,cv.HOUGH_GRADIENT,1,15,
                                             param1=10,param2=10,minRadius=7,maxRadius=9)
     #circles = cv.HoughCircles(cimg,cv.HOUGH_GRADIENT, 5, 500)
     circles = np.uint16(np.around(circles))
+    return circles
+
+def findcircles(cimg):
+    #check orientation
+    circles = getHough(cimg.copy())
     circles_orig = circles.copy()
-    # filter questions circles
     circles = [circ for circ in circles[0] if circ[0] > 340]
+
+    # filter questions circles
     first = [circ for circ in circles if circ[0] < 470]
     second = [circ for circ in circles if circ[0] > 580]
     # unsorted_list.sort(key=lambda x: x[3])
@@ -204,6 +253,8 @@ def transform(fn):
     # apply Otsu's thresholding method to binarize the warped
     # piece of paper
     return paper, warped
+
+
 
 if __name__ == '__main__':
     #print(__doc__)
