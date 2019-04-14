@@ -28,14 +28,19 @@ def main():
     except IndexError:
         fn = 'extra/clean.png'
     
-    paper, warped = transform(fn)
-
+    orig = 'extra/clean.png'
+    paper, warped = transform(orig)
+    _, target = transform(fn)
     outimg, quiz = findcircles(warped.copy())
+    outimg, answers = extract(quiz, target)
+    if outimg.any() == None:
+        print("outimg is none")
+        sys.exit()
     cv.imshow("source1", outimg)
     #cv.imshow("source2", cimg)
     k = cv.waitKey(0)
     if k == ord('s'):
-        cv.imwrite("research.png", circular)
+        cv.imwrite("research.png", outimg)
     print('Done')
 
 
@@ -44,14 +49,66 @@ def main():
 # THIS MEANS YOU CAN OVERLAY TO CHECK QUESTIONS AND POSITIONS
 # THIS ALSO MEANS ORIENTATION
 # IT MEANS THAT LOST CIRCLES CAN BE RECOVERED FROM THE PROTOTYPE
-def mark(quiz, warped):
-    return None
+
+# find answers
+def marking(answers):
+    options = ['a', 'b', 'c', 'd', 'e']
+    mark = []
+    for qi, q in enumerate(answers):
+        letters = []
+        for ci, circle in enumerate(q):
+            if circle:
+                letters.append(options[ci])
+        mark.append(letters)
+
+    return mark
+
+def extract(quiz, warped):
+    blank = np.zeros(warped.shape, dtype="uint8")
+    answers = []
+    ccc = 0
+    for q in quiz:
+        for i in q:
+            # draw the outer circle
+            y = i[0]
+            x = i[1]
+            r = i[2] + 1
+            roi = warped[x-r:x+r, y-r:y+r]
+            result = warped[x-r:x+r, y-r:y+r]
+            ret, mask = cv.threshold(result, 10, 255, cv.THRESH_BINARY)
+            mask_inv = cv.bitwise_not(mask)
+            img1_bg = cv.bitwise_and(roi,roi,mask = mask_inv)
+            img2_fg = cv.bitwise_and(result, result,mask = mask)
+            img2_fg = cv.bitwise_not(img2_fg)
+            ret, img2_fg = cv.threshold(img2_fg, 100, 255, cv.THRESH_BINARY)
+            result = img2_fg
+            dst = cv.add(img1_bg,img2_fg)
+            blank[x-r:x+r, y-r:y+r] = dst
+            #result = cv.bitwise_not(result)
+            #thresh = cv.threshold(result, 0, 255,
+            #        cv.THRESH_BINARY_INV | cv.THRESH_OTSU)[1]
+            #mask = np.zeros(thresh.shape, dtype="uint8")
+            #mask = cv.bitwise_and(, result, mask=mask)
+            total = cv.countNonZero(result)
+            answers.append(total > 100)
+            print(ccc, total)
+            if ccc == 10000:
+                return blank
+            ccc += 1
+            #result = img[a1-r:a1+r,b1-r:b1+r]
+            #cv.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
+            # draw the center of the circle
+            #cv.circle(cimg,(i[0],i[1]),2,(0,0,255),3)
     # two ways 
     # one 
     # find all marked circles and check their positions
     # two
     # cut each circle out and check if marked
+    answers = nest(answers, 5)
+    return blank, answers
 
+def nest(simple, n):
+    return [first[i:i + n] for i in range(0, len(first), n)]
 
 def findcircles(cimg):
     #thresh = cv.threshold(cimg, 0, 255,
