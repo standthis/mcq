@@ -1,16 +1,17 @@
 #!/usr/bin/python
 
 '''
-This example illustrates how to use cv.HoughCircles() function.
-
-Usage:
-    mcq.py [<image_name>]
-    image argument defaults to extra/clean.png
+logging.debug('This is a debug message')
+logging.info('This is an info message')
+logging.warning('This is a warning message')
+logging.error('This is an error message')
+logging.critical('This is a critical message')
 '''
 
 # Python 2/3 compatibility
 from __future__ import print_function
 
+import logging
 import numpy as np
 import cv2 as cv
 from imutils.perspective import four_point_transform
@@ -22,6 +23,7 @@ import sys
 import collections 
 import math
 np.set_printoptions(threshold=sys.maxsize)
+logging.basicConfig(level=logging.DEBUG)
 
 def main():
     try:
@@ -31,10 +33,20 @@ def main():
     
     memo_path = 'extra/burst/pg_0003-1.png'
     orig = 'extra/clean.png'
-    paper, warped = transform(orig)
-    targetpaper, target = transform(fn)
-    if orient(target):
-        target = conv.rotate_bound(target.copy(), 180)
+    #fnimg = cv.imread(cv.samples.findFile(fn))
+    #origimg = cv.imread(cv.samples.findFile(orig))
+    fnimg = cv.imread(cv.samples.findFile(fn))
+    origimg = cv.imread(cv.samples.findFile(orig))
+
+    # THESE ARE NP IMAGES AND YET TRANSFORM BELIEVES THEM TO BE STR
+
+    #orig_copy = orig.copy()
+    if len(sifted(origimg, fnimg)) < 400:
+        fnimg = conv.rotate_bound(fnimg.copy(), 180)
+    paper, warped = transform(origimg)
+    targetpaper, target = transform(fnimg)
+    #if orient(target):
+    #    target = conv.rotate_bound(target.copy(), 180)
     outimg, quiz = findcircles(warped.copy())
     targetout, targetQuiz = findcircles(target.copy())
     blankout, answers = extract(quiz, target)
@@ -45,11 +57,10 @@ def main():
     result = mark(answers, solutions)
     print('the student recieved', sum(result)/len(result)*100, '%')
 
+    blankout = target 
     #blankout = targetout 
-    blankout = memoblank 
     if outimg.any() == None:
         print("outimg is none")
-        sys.exit()
     cv.imshow("source1", blankout)
     #cv.imshow("source2", cimg)
     k = cv.waitKey(0)
@@ -63,6 +74,35 @@ def main():
 # THIS MEANS YOU CAN OVERLAY TO CHECK QUESTIONS AND POSITIONS
 # THIS ALSO MEANS ORIENTATION
 # IT MEANS THAT LOST CIRCLES CAN BE RECOVERED FROM THE PROTOTYPE
+
+def sifted(img1, img2):
+    #img = cv.imread('home.jpg')
+    #gray= cv.cvtColor(img,cv.COLOR_BGR2GRAY)
+    #img = cv2.imread("the_book_thief.jpg", cv2.IMREAD_GRAYSCALE)
+    #kp = sift.detect(gray,None)
+
+#    img2 = conv.rotate_bound(img2.copy(), 180)
+    img1 = grayed(img1)
+    img2 = grayed(img2)
+    sift = cv.xfeatures2d.SIFT_create()
+    orb = cv.ORB_create()
+    #kp1, des1 = sift.detectAndCompute(img1, None)
+    #kp2, des2 = sift.detectAndCompute(img2, None)
+    kp1, des1 = orb.detectAndCompute(img1, None)
+    kp2, des2 = orb.detectAndCompute(img2, None)
+    bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1, des2)
+    logging.debug(len(matches))
+    matches = sorted(matches, key = lambda x:x.distance)
+    matching_result = cv.drawMatches(img1, kp1, img2, kp2, matches[:50], None, flags=2)
+    #img = cv.drawKeypoints(img, keypoints, None)
+#    logging.debug(type(k))
+    return matches
+
+#    logging.debug(type(kp))
+    #img=cv.drawKeypoints(gray,kp)
+
+    #cv.imwrite('sift_keypoints.jpg',img)
 
 def onlyone(result):
     for q in result:
@@ -106,6 +146,7 @@ def marktocsv(answers):
 
     return mark
 
+# xfeatures2d
 def extract(quiz, warped):
     blank = np.zeros(warped.shape, dtype="uint8")
     answers = []
@@ -200,9 +241,10 @@ def findcircles(cimg):
     #    count += 1
     return cimg, quiz
 
-def transform(fn):
-    src = cv.imread(cv.samples.findFile(fn))
-    cimg = src.copy() # numpy function
+def grayed(src):
+    return cv.cvtColor(src, cv.COLOR_BGR2GRAY)
+
+def transform(src):
     #img = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
     #img = cv.bilateralFilter(img, 11, 17, 17)
     #img = cv.GaussianBlur(img, (5, 5), 0)

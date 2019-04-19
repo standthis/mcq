@@ -102,7 +102,6 @@ for contour in contours:
     what = cv.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
 
 
-
 #Morpholoical transformation
 kernel = np.ones((5,5),np.uint8)
 erosion = cv.erode(img,kernel,iterations = 1)
@@ -144,6 +143,3 @@ cv.destroyAllWindows()
 #    plt.title(titles[i])
 #    plt.xticks([]),plt.yticks([])
 #plt.show()
-
-
-
