@@ -33,20 +33,21 @@ def main():
     
     memo_path = 'extra/burst/pg_0003-1.png'
     orig = 'extra/clean.png'
-    #fnimg = cv.imread(cv.samples.findFile(fn))
-    #origimg = cv.imread(cv.samples.findFile(orig))
     fnimg = cv.imread(cv.samples.findFile(fn))
     origimg = cv.imread(cv.samples.findFile(orig))
 
     # THESE ARE NP IMAGES AND YET TRANSFORM BELIEVES THEM TO BE STR
 
     #orig_copy = orig.copy()
-    if len(sifted(origimg, fnimg)) < 400:
-        fnimg = conv.rotate_bound(fnimg.copy(), 180)
+    #matches, matching_result = sifted(origimg.copy(), fnimg.copy())
     paper, warped = transform(origimg)
     targetpaper, target = transform(fnimg)
     #if orient(target):
     #    target = conv.rotate_bound(target.copy(), 180)
+    similar = sifted(warped.copy(), target.copy(), False)
+    if not similar:
+        fnimg = conv.rotate_bound(target.copy(), 180)
+        logging.debug('TURNED')
     outimg, quiz = findcircles(warped.copy())
     targetout, targetQuiz = findcircles(target.copy())
     blankout, answers = extract(quiz, target)
@@ -57,15 +58,18 @@ def main():
     result = mark(answers, solutions)
     print('the student recieved', sum(result)/len(result)*100, '%')
 
-    blankout = target 
+    blankout = target
     #blankout = targetout 
     if outimg.any() == None:
         print("outimg is none")
-    cv.imshow("source1", blankout)
+    #cv.imshow("source1", blankout)
     #cv.imshow("source2", cimg)
     k = cv.waitKey(0)
+    if k == ord('q'):
+        cv.destroyAllWindows()
     if k == ord('s'):
         cv.imwrite("research.png", blankout)
+    cv.imwrite("research.png", blankout)
     print('Done')
 
 
@@ -75,29 +79,51 @@ def main():
 # THIS ALSO MEANS ORIENTATION
 # IT MEANS THAT LOST CIRCLES CAN BE RECOVERED FROM THE PROTOTYPE
 
-def sifted(img1, img2):
+def sifted(img1, img2, gray):
     #img = cv.imread('home.jpg')
     #gray= cv.cvtColor(img,cv.COLOR_BGR2GRAY)
     #img = cv2.imread("the_book_thief.jpg", cv2.IMREAD_GRAYSCALE)
     #kp = sift.detect(gray,None)
 
 #    img2 = conv.rotate_bound(img2.copy(), 180)
-    img1 = grayed(img1)
-    img2 = grayed(img2)
+    if gray:
+        img1 = grayed(img1)
+        img2 = grayed(img2)
     sift = cv.xfeatures2d.SIFT_create()
     orb = cv.ORB_create()
-    #kp1, des1 = sift.detectAndCompute(img1, None)
-    #kp2, des2 = sift.detectAndCompute(img2, None)
-    kp1, des1 = orb.detectAndCompute(img1, None)
-    kp2, des2 = orb.detectAndCompute(img2, None)
-    bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(des1, des2)
+    kp1, des1 = sift.detectAndCompute(img1, None)
+    kp2, des2 = sift.detectAndCompute(img2, None)
+    #kp1, des1 = orb.detectAndCompute(img1, None)
+    #kp2, des2 = orb.detectAndCompute(img2, None)
+    FLANN_INDEX_KDTREE = 1
+    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+    search_params = dict(checks=50)   # or pass empty dictionary
+    flann = cv.FlannBasedMatcher(index_params,search_params)
+    matches = flann.knnMatch(des1,des2,k=2)
+    # Apply ratio test
+    good = []
+    for m,n in matches:
+        if m.distance < 0.75*n.distance:
+            good.append([m])
+    #bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
+    #matches = bf.match(des1, des2)
+
     logging.debug(len(matches))
-    matches = sorted(matches, key = lambda x:x.distance)
-    matching_result = cv.drawMatches(img1, kp1, img2, kp2, matches[:50], None, flags=2)
+    logging.debug(len(good))
+
+    # Define how similar they are
+    number_keypoints = 0
+    if len(kp1) <= len(kp2):
+        number_keypoints = len(kp1)
+    else:
+        number_keypoints = len(kp2)
+
+    #matches = sorted(matches, key = lambda x:x.distance)
+    #matching_result = cv.drawMatches(img1, kp1, img2, kp2, matches[:50], None, flags=2)
     #img = cv.drawKeypoints(img, keypoints, None)
 #    logging.debug(type(k))
-    return matches
+    logging.debug(len(good) / number_keypoints)
+    return len(good) / number_keypoints >= 0.5
 
 #    logging.debug(type(kp))
     #img=cv.drawKeypoints(gray,kp)
@@ -113,7 +139,8 @@ def onlyone(result):
 def flat(l):
     return [item for sublist in l for item in sublist]
 
-def memo(img, quiz):
+def memo(img_path, quiz):
+    img = cv.imread(cv.samples.findFile(img_path))
     paper, warped = transform(img)
     if orient(warped):
         warped = conv.rotate_bound(warped.copy(), 180)
@@ -244,6 +271,9 @@ def findcircles(cimg):
 def grayed(src):
     return cv.cvtColor(src, cv.COLOR_BGR2GRAY)
 
+def approx_Equal(x, y, tolerance=1000):
+        return abs(x-y) <= tolerance
+
 def transform(src):
     #img = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
     #img = cv.bilateralFilter(img, 11, 17, 17)
@@ -261,29 +291,33 @@ def transform(src):
     # the contour that corresponds to the document
     # load the image, convert it to grayscale, blur it
     # slightly, then find edges
+    expected = 847871.5
     image = src.copy()
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     blurred = cv.GaussianBlur(gray, (5, 5), 0)
     edged = cv.Canny(blurred, 75, 200)
     cnts = cv.findContours(edged.copy(), cv.RETR_EXTERNAL,
-	    cv.CHAIN_APPROX_SIMPLE)
+            cv.CHAIN_APPROX_SIMPLE)
     cnts = conv.grab_contours(cnts)
     docCnt = None
      
     # ensure that at least one contour was found
     if len(cnts) > 0:
-	# sort the contours according to their size in
-	# descending order
+        # sort the contours according to their size in
+        # descending order
         cnts = sorted(cnts, key=cv.contourArea, reverse=True)
-	# loop over the sorted contours
+        # loop over the sorted contours
         for c in cnts:
-	    # approximate the contour
+            # approximate the contour
             peri = cv.arcLength(c, True)
-            approx = cv.approxPolyDP(c, 0.02 * peri, True)
+            approx = cv.approxPolyDP(c, 0.02 * peri, True)  
+            area = cv.contourArea(c)
+            logging.debug(str(area) + " -> area")
 
-	    # if our approximated contour has four points,
-	    # then we can assume we have found the paper
-            if len(approx) == 4:
+            # if our approximated contour has four points,
+            # then we can assume we have found the paper
+            if len(approx) == 4 and approx_Equal(area, expected, 10000):
+                logging.debug(str(area) + " -> wininng area")
                 docCnt = approx
                 break
     # apply a four point perspective transform to both the
@@ -301,4 +335,4 @@ def transform(src):
 if __name__ == '__main__':
     #print(__doc__)
     main()
-    cv.destroyAllWindows()
+    #cv.destroyAllWindows()
