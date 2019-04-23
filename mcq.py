@@ -11,6 +11,7 @@ logging.critical('This is a critical message')
 # Python 2/3 compatibility
 from __future__ import print_function
 
+from deskew import deskew
 import logging
 import numpy as np
 import cv2 as cv
@@ -41,8 +42,8 @@ def main():
     origimg = cv.imread(cv.samples.findFile(orig))
 
     # THESE ARE NP IMAGES AND YET TRANSFORM BELIEVES THEM TO BE STR
-    similar = sifted(fnimg.copy(), origimg.copy(), True)
-    logging.debug(similar)
+    fnimg = sifted(fnimg.copy(), origimg.copy(), True)
+    #logging.debug(similar)
     #if not similar:
         #fnimg = conv.rotate_bound(target.copy(), 180)
     #    logging.debug('TURNED')
@@ -99,41 +100,62 @@ def show_wait_destroy(img, winname='win'):
 def sifted(img1, img2, gray):
     #img = cv.imread('home.jpg')
     #gray= cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-    #img = cv2.imread("the_book_thief.jpg", cv2.IMREAD_GRAYSCALE)
+    #img = cv.imread("the_book_thief.jpg", cv.IMREAD_GRAYSCALE)
     #kp = sift.detect(gray,None)
 
 #    img2 = conv.rotate_bound(img2.copy(), 180)
+    img1orig = img1.copy()
     if gray:
         img1 = grayed(img1)
         img2 = grayed(img2)
     sift = cv.xfeatures2d.SIFT_create()
     orb = cv.ORB_create()
-    #kp1, des1 = sift.detectAndCompute(img1, None)
-    #kp2, des2 = sift.detectAndCompute(img2, None)
-    kp1, des1 = orb.detectAndCompute(img1, None)
-    kp2, des2 = orb.detectAndCompute(img2, None)
+    kp1, des1 = sift.detectAndCompute(img1, None)
+    kp2, des2 = sift.detectAndCompute(img2, None)
+    #kp1, des1 = orb.detectAndCompute(img1, None)
+    #kp2, des2 = orb.detectAndCompute(img2, None)
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
     search_params = dict(checks=50)   # or pass empty dictionary
     flann = cv.FlannBasedMatcher(index_params,search_params)
-    #matches = flann.knnMatch(des1,des2,k=2)
+
+    matches = flann.knnMatch(des1,des2,k=2)
+# store all the good matches as per Lowe's ratio test.
+    good = []
+    for m,n in matches:
+        if m.distance < 0.7*n.distance:
+            good.append(m)
 
     # Match features.
-    matcher = cv.DescriptorMatcher_create(cv.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
-    matches = matcher.match(des1, des2, None)
+    #matcher = cv.DescriptorMatcher_create(cv.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
+    #matches = matcher.match(des1, des2, None)
 
     # Extract location of good matches
-    points1 = np.zeros((len(matches), 2), dtype=np.float32)
-    points2 = np.zeros((len(matches), 2), dtype=np.float32)
+    #points1 = np.zeros((len(matches), 2), dtype=np.float32)
+    #points2 = np.zeros((len(matches), 2), dtype=np.float32)
 
-    for i, match in enumerate(matches):
-        points1[i, :] = kp1[match.queryIdx].pt
-        points2[i, :] = kp2[match.trainIdx].pt
+    #for i, match in enumerate(matches):
+    #    points1[i, :] = kp1[match.queryIdx].pt
+    #    points2[i, :] = kp2[match.trainIdx].pt
 
     # Find homography
-    h, mask = cv.findHomography(points1, points2, cv.RANSAC)
-    matchesMask = mask.ravel().tolist()
-    return (len(matchesMask) - np.count_nonzero(matchesMask)) /len(matchesMask)
+    #return (len(matchesMask) - np.count_nonzero(matchesMask)) /len(matchesMask)
+    MIN_MATCH_COUNT = 1
+    print(len(good))
+    if len(good)>MIN_MATCH_COUNT:
+        src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+        dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+
+        M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC,5.0)
+        matchesMask = mask.ravel().tolist()
+
+        h,w = img1.shape
+        pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+        #dst = cv.perspectiveTransform(pts,M)
+        dst = cv.warpPerspective(img1orig, M, (w,h))
+        return dst
+     
+
     #logging.debug(h)
     
      #Apply ratio test
@@ -346,7 +368,7 @@ def transform(src):
     dilation = cv.dilate(closing,kernel,iterations = 1)
     erosion = cv.erode(closing,kernel,iterations = 1)
     #coords = np.column_stack(np.where(thresh > 0))
-    #angle = cv2.minAreaRect(coords)[-1]
+    #angle = cv.minAreaRect(coords)[-1]
     # ensure that at least one contour was found
     if len(cnts) > 0:
         # sort the contours according to their size in
