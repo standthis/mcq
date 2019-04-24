@@ -1,0 +1,67 @@
+InfoBegin
+InfoKey: CreationDate
+InfoValue: D:20181012152836+02'00'
+InfoBegin
+InfoKey: Creator
+InfoValue: Xerox WorkCentre 7225
+InfoBegin
+InfoKey: Producer
+InfoValue: Xerox WorkCentre 7225
+PdfID0: 800f18398082dd66f541917ba3cac9f0
+PdfID1: 800f18398082dd66f541917ba3cac9f0
+NumberOfPages: 11
+PageMediaBegin
+PageMediaNumber: 1
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 2
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 3
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 4
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 5
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 6
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 7
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 8
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 9
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 10
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
+PageMediaBegin
+PageMediaNumber: 11
+PageMediaRotation: 270
+PageMediaRect: 0 0 842 596
+PageMediaDimensions: 842 596
