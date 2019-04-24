@@ -35,9 +35,10 @@ def main():
         fn = sys.argv[1]
     except IndexError:
         fn = 'extra/clean.png'
+        fn = 'template.png'
     
     memo_path = 'extra/burst/pg_0003-1.png'
-    orig = 'extra/clean.png'
+    orig = 'template.png'
     fnimg = cv.imread(cv.samples.findFile(fn))
     origimg = cv.imread(cv.samples.findFile(orig))
 
@@ -67,8 +68,8 @@ def main():
 
     assert onlyone(solutions)
 
-    result = mark(answers, solutions)
-    print('the student recieved', sum(result)/len(result)*100, '%')
+    #result = mark(answers, solutions)
+    #print('the student recieved', sum(result)/len(result)*100, '%')
 
     blankout = fnimg
     #blankout = targetout 
@@ -149,7 +150,7 @@ def sifted(img1, img2, gray):
         M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC,5.0)
         matchesMask = mask.ravel().tolist()
 
-        h,w = img1.shape
+        h,w = img2.shape
         pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
         #dst = cv.perspectiveTransform(pts,M)
         dst = cv.warpPerspective(img1orig, M, (w,h))
