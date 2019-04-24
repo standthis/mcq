@@ -46,17 +46,20 @@ def main():
 
     fnimg = sifted(fnimg_c.copy(), origimg_c.copy())
     memo_sift = sifted(memo_img_c.copy(), origimg_c.copy())
-    outimg, quiz = findcircles(origimg_c)
+
+    outimg, quiz = findcircles(origimg_c.copy())
     targetout, targetQuiz = findcircles(fnimg.copy())
+    studentnum_circles = studentnum(origimg_c.copy())
+
     blankout, answers = extract(quiz, fnimg.copy())
     outmemo, solutions = extract(quiz, memo_sift.copy())
 
-    assert onlyone(solutions)
+    #assert onlyone(solutions)
 
     result = mark(answers, solutions)
     print('the student recieved', sum(result)/len(result)*100, '%')
 
-    blankout = outmemo
+    blankout = blankout
     #blankout = targetout 
     if outimg.any() == None:
         print("outimg is none")
@@ -165,15 +168,36 @@ def extract(quiz, warped):
 def nest(simple, n):
     return [simple[i:i + n] for i in range(0, len(simple), n)]
 
-def getHough(img):
-    circles = cv.HoughCircles(img,cv.HOUGH_GRADIENT,1,15,param1=10,param2=10,minRadius=7,maxRadius=9)
+def getHough(img, studentnum):
+    if studentnum:
+        circles = cv.HoughCircles(img,cv.HOUGH_GRADIENT,1,15,param1=10,param2=10,minRadius=10,maxRadius=10)
+    else:
+        circles = cv.HoughCircles(img,cv.HOUGH_GRADIENT,1,15,param1=10,param2=10,minRadius=7,maxRadius=9)
     circles = np.uint16(np.around(circles))
     return circles
 
+def studentnum(cimg):
+    # filter student number
+    student = getHough(cimg.copy(), True)
+    student = [circ for circ in student[0] if circ[1] < 910]
+    # remove task
+    student = [circ for circ in student if not (circ[0] > 170 and circ[1] > 470)]
+    start = 48
+    studentcols = []
+    for i in range(7):
+        studentcols.append(
+                [circ for circ in student 
+                    if circ[0] >= (start - (30*i)) and circ[0] < (start + (30 * i))])
+        i += 1
+
+    studentcols = [sorted(col, key=lambda x: x[1]) for col in studentcols]
+    return studentcols
+
 def findcircles(cimg):
-    circles = getHough(cimg.copy())
+    circles = getHough(cimg.copy(), False)
     circles_orig = circles.copy()
     circles = [circ for circ in circles[0] if circ[0] > 340]
+
 
     # filter questions circles
     first = [circ for circ in circles if circ[0] < 470]
