@@ -49,17 +49,34 @@ def main():
 
     outimg, quiz = findcircles(origimg_c.copy())
     targetout, targetQuiz = findcircles(fnimg.copy())
-    studentnum_circles = studentnum(origimg_c.copy())
+
+    studentnum_circles, tasknum = studentnumCircle(origimg_c.copy())
+    studentout, studentnum_result = extract(studentnum_circles, fnimg.copy())
+    taskout, tasknum_result = extract(tasknum, fnimg.copy())
+    tasknumstr = getTasknum(tasknum_result)
+    #assert onlyone(studentnum_result)
+    if not onlyone(studentnum_result):
+        logging.debug("ONLYONE FAIL!")
+    #print(studentnum_result)
+
+    studentnum = findStudentnum(studentnum_result)
+    #logging.debug(studentnum)
 
     blankout, answers = extract(quiz, fnimg.copy())
     outmemo, solutions = extract(quiz, memo_sift.copy())
 
-    #assert onlyone(solutions)
+    assert onlyone(solutions)
 
     result = mark(answers, solutions)
     print('the student recieved', sum(result)/len(result)*100, '%')
 
-    blankout = blankout
+    # mark to csv 
+    csvl = marktocsv(answers)
+    #logging.debug(csvl)
+    #logging.debug(len(csvl))
+    writecsv(csvl, studentnum , tasknumstr)
+
+    blankout = fnimg
     #blankout = targetout 
     if outimg.any() == None:
         print("outimg is none")
@@ -70,8 +87,45 @@ def main():
         cv.destroyAllWindows()
     #if k == ord('s'):
     #    cv.imwrite("research.png", blankout)
-    cv.imwrite("research.png", blankout)
+    #cv.imwrite("research.png", blankout)
     print('Done')
+
+def writecsv(mark, stnum, tasknum):
+    f = open("results.txt","a")
+    letters = None
+    for l, line in enumerate(mark):
+        if line is not None:
+            letters = ''.join(line)
+        out = str(stnum) + ", " + str(tasknum) + ", " + str(l) + ", "  + str(letters)
+        f.write(out + '\n')
+    f.close()
+
+def getTasknum(result):
+    #assert len(result) == 2
+    output = ""
+    if sum(result[0]) == 0:
+        output += '0'
+    else: 
+        output += str(result[0].index(True))
+    if sum(result[1]) == 0:
+        return None
+    else:
+        output += str(result[1].index(True))
+    return output
+
+def findStudentnum(result):
+    student = [] 
+    for i, r in enumerate(result):
+        if sum(r) == 1:
+            if i == 2:
+                student.append(chr(97 + r.index(True)))
+            else:
+                student.append(str(r.index(True)))
+        else:
+            return None
+    return ''.join(student)
+
+
 
 def show_wait_destroy(img, winname='win'):
     cv.imshow(winname, img)
@@ -101,7 +155,6 @@ def sifted(img1, img2):
             good.append(m)
 
     MIN_MATCH_COUNT = 1
-    print(len(good))
     if len(good)>MIN_MATCH_COUNT:
         src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
         dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
@@ -135,14 +188,19 @@ def marktocsv(answers):
         for ci, circle in enumerate(q):
             if circle:
                 letters.append(options[ci])
-        mark.append(letters)
+        if sum(q) == 0:
+            mark.append(None)
+        else:
+            mark.append(letters)
 
     return mark
+
 
 def extract(quiz, warped):
     blank = np.zeros(warped.shape, dtype="uint8")
     answers = []
     for q in quiz:
+        answer = []
         for i in q:
             y = i[0]
             x = i[1]
@@ -161,8 +219,9 @@ def extract(quiz, warped):
             total = cv.countNonZero(result)
             h, w = result.shape
             area = h * w 
-            answers.append((total / area) > 0.5)
-    answers = nest(answers, 5)
+            answer.append((total / area) > 0.5)
+        answers.append(answer)
+    #answers = nest(answers, 5)
     return blank, answers
 
 def nest(simple, n):
@@ -176,10 +235,13 @@ def getHough(img, studentnum):
     circles = np.uint16(np.around(circles))
     return circles
 
-def studentnum(cimg):
+def studentnumCircle(cimg):
     # filter student number
     student = getHough(cimg.copy(), True)
     student = [circ for circ in student[0] if circ[1] < 910]
+    student = [circ for circ in student if circ[0] < 280]
+    # isolate task
+    tasknum = [circ for circ in student if (circ[0] > 170 and circ[1] > 470)]
     # remove task
     student = [circ for circ in student if not (circ[0] > 170 and circ[1] > 470)]
     start = 48
@@ -187,11 +249,19 @@ def studentnum(cimg):
     for i in range(7):
         studentcols.append(
                 [circ for circ in student 
-                    if circ[0] >= (start - (30*i)) and circ[0] < (start + (30 * i))])
-        i += 1
+                    if circ[0] >= start and circ[0] < start + 30])
+        start += 30
+        #i += 1
 
     studentcols = [sorted(col, key=lambda x: x[1]) for col in studentcols]
-    return studentcols
+
+    # Task number sort
+    # sort x axis
+    tasknum.sort(key=lambda x: x[0])
+    # sort y axis
+    tasknum = nest(tasknum, 10)
+    tasknum = [sorted(col, key=lambda x: x[1]) for col in tasknum]
+    return studentcols, tasknum
 
 def findcircles(cimg):
     circles = getHough(cimg.copy(), False)
