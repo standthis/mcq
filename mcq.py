@@ -24,9 +24,19 @@ import sys
 import collections 
 import math
 import random as rng
+import argparse 
+
 np.set_printoptions(threshold=sys.maxsize)
 logging.basicConfig(level=logging.DEBUG)
 
+#parser = argparse.ArgumentParser()
+parser.add_argument('filename', nargs='?', help="Expecting MCQ answer sheet", default=base)
+parser.add_argument('-b', '--batch', nargs='1', help="-b <pdf file>", const=base)
+#parser.add_argument('-s', '--show', nargs='?', help="Please provide a valid ppm file to uncover", const=output)
+args = parser.parse_args()
+# pdftk MCQ_200dpi_2016.pdf burst
+# pdftoppm "$1" "${1%.*}" -png
+# for i in {1..21}; do ./mcq.py extra/burst/pg_000$i.pdf ; done
 def main():
     try:
         fn = sys.argv[1]
@@ -99,6 +109,7 @@ def writecsv(mark, stnum, tasknum):
         out = str(stnum) + ", " + str(tasknum) + ", " + str(l) + ", "  + str(letters)
         f.write(out + '\n')
     f.close()
+    print('Results written to results.txt')
 
 def getTasknum(result):
     #assert len(result) == 2
