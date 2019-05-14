@@ -1,13 +1,5 @@
 #!/usr/bin/python
 
-'''
-#logging.debug('This is a debug message')
-logging.info('This is an info message')
-logging.warning('This is a warning message')
-logging.error('This is an error message')
-logging.critical('This is a critical message')
-'''
-
 # Python 2/3 compatibility
 from __future__ import print_function
 
@@ -25,21 +17,25 @@ import collections
 import math
 import random as rng
 import argparse 
+import subprocess as sp 
+import datetime
+import glob
 
 np.set_printoptions(threshold=sys.maxsize)
 logging.basicConfig(level=logging.DEBUG)
 
-#parser = argparse.ArgumentParser()
-parser.add_argument('filename', nargs='?', help="Expecting MCQ answer sheet", default=base)
-parser.add_argument('-b', '--batch', nargs='1', help="-b <pdf file>", const=base)
-#parser.add_argument('-s', '--show', nargs='?', help="Please provide a valid ppm file to uncover", const=output)
+parser = argparse.ArgumentParser()
+parser.add_argument('filename', nargs='?', help="Expecting single MCQ answer sheet", default='template.png')
+parser.add_argument('-b', '--batch', nargs='?', help="Provide pdf file of scans", const='template.png')
 args = parser.parse_args()
-# pdftk MCQ_200dpi_2016.pdf burst
-# pdftoppm "$1" "${1%.*}" -png
-# for i in {1..21}; do ./mcq.py extra/burst/pg_000$i.pdf ; done
-def main():
+
+def burstPDF(pdfpath):
+    sp.run("./burstPDF.sh " + pdfpath, shell=True, check=True)
+    sp.run("./driver.sh", shell=True, check=True)
+
+def main(pngpath):
     try:
-        fn = sys.argv[1]
+        fn = pngpath
     except IndexError:
         fn = 'extra/clean.png'
         fn = 'template.png'
@@ -64,13 +60,10 @@ def main():
     studentout, studentnum_result = extract(studentnum_circles, fnimg.copy())
     taskout, tasknum_result = extract(tasknum, fnimg.copy())
     tasknumstr = getTasknum(tasknum_result)
-    #assert onlyone(studentnum_result)
     if not onlyone(studentnum_result):
         logging.debug("ONLYONE FAIL!")
-    #print(studentnum_result)
 
     studentnum = findStudentnum(studentnum_result)
-    #logging.debug(studentnum)
 
     blankout, answers = extract(quiz, fnimg.copy())
     outmemo, solutions = extract(quiz, memo_sift.copy())
@@ -82,22 +75,14 @@ def main():
 
     # mark to csv 
     csvl = marktocsv(answers)
-    #logging.debug(csvl)
-    #logging.debug(len(csvl))
     writecsv(csvl, studentnum , tasknumstr)
 
     blankout = fnimg
-    #blankout = targetout 
     if outimg.any() == None:
         print("outimg is none")
-    #cv.imshow("source1", blankout)
-    #cv.imshow("source2", cimg)
     k = cv.waitKey(0)
     if k == ord('q'):
         cv.destroyAllWindows()
-    #if k == ord('s'):
-    #    cv.imwrite("research.png", blankout)
-    #cv.imwrite("research.png", blankout)
     print('Done')
 
 def writecsv(mark, stnum, tasknum):
@@ -112,7 +97,6 @@ def writecsv(mark, stnum, tasknum):
     print('Results written to results.txt')
 
 def getTasknum(result):
-    #assert len(result) == 2
     output = ""
     if sum(result[0]) == 0:
         output += '0'
@@ -151,8 +135,6 @@ def sifted(img1, img2):
     orb = cv.ORB_create()
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
-    #kp1, des1 = orb.detectAndCompute(img1, None)
-    #kp2, des2 = orb.detectAndCompute(img2, None)
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
     search_params = dict(checks=50)   # or pass empty dictionary
@@ -232,7 +214,6 @@ def extract(quiz, warped):
             area = h * w 
             answer.append((total / area) > 0.5)
         answers.append(answer)
-    #answers = nest(answers, 5)
     return blank, answers
 
 def nest(simple, n):
@@ -262,7 +243,6 @@ def studentnumCircle(cimg):
                 [circ for circ in student 
                     if circ[0] >= start and circ[0] < start + 30])
         start += 30
-        #i += 1
 
     studentcols = [sorted(col, key=lambda x: x[1]) for col in studentcols]
 
@@ -280,13 +260,10 @@ def findcircles(cimg):
     circles = [circ for circ in circles[0] if circ[0] > 340]
 
 
-    # filter questions circles
     first = [circ for circ in circles if circ[0] < 470]
     second = [circ for circ in circles if circ[0] > 580]
-    # unsorted_list.sort(key=lambda x: x[3])
     first.sort(key=lambda x: x[1]) 
     second.sort(key=lambda x: x[1]) 
-    # [l[i:i + n] for i in range(0, len(l), n)] 
     n = 5
     # all questions 
     quiz = [first[i:i + n] for i in range(0, len(first), n)]
@@ -305,7 +282,12 @@ def grayed(src):
     gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
     return gray
 
+
 if __name__ == '__main__':
-    #print(__doc__)
-    main()
-    #cv.destroyAllWindows()
+    if args.batch is not None:
+        assert type(args.batch) == str
+        burstPDF(args.batch)
+    if args.filename is not None:
+        assert type(args.filename) == str
+        print(args.filename)
+        main(args.filename)
