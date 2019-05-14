@@ -91,7 +91,7 @@ def writecsv(mark, stnum, tasknum):
     for l, line in enumerate(mark):
         if line is not None:
             letters = ''.join(line)
-        out = str(stnum) + ", " + str(tasknum) + ", " + str(l) + ", "  + str(letters)
+        out = str(stnum) + ", " + str(tasknum) + ", " + str(l + 1) + ", "  + str(letters)
         f.write(out + '\n')
     f.close()
     print('Results written to results.txt')
